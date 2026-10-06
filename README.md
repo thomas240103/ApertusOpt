@@ -4,6 +4,8 @@ ApertusOpt is a starter project for converting a natural-language optimization p
 
 The first MVP supports only the 0/1 Knapsack Problem.
 
+The key idea is separation of responsibilities: Apertus translates human language into structured JSON, Pydantic validates the generated model, and OR-Tools computes the optimal solution. The LLM is not asked to solve the optimization problem.
+
 ```text
 Natural Language
 |
@@ -34,18 +36,41 @@ The pipeline is:
 5. `src/solver.py` solves the validated 0/1 knapsack problem with Google OR-Tools.
 6. `src/evaluator.py` checks solution feasibility and reported totals.
 
+The command-line demo prints every major step: generated JSON, readable mathematical formulation, solver result, and evaluation.
+
 ## Installation
 
 Use Python 3.11 or newer.
 
 ```bash
+git clone https://github.com/thomas240103/ApertusOpt.git
 cd ApertusOpt
 python -m pip install -r requirements.txt
 ```
 
+If you are working from an already cloned copy, just run the last two commands from inside the project directory.
+
 ## Environment Variables
 
-Create a `.env` file in the `ApertusOpt` directory when you are ready to use the real API:
+Copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+On PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+For mock mode, keep:
+
+```env
+MOCK_APERTUS=true
+```
+
+When you are ready to use a real Apertus API, set `MOCK_APERTUS=false` or remove it, then fill in:
 
 ```env
 APERTUS_API_URL=https://your-apertus-endpoint.example/v1/chat/completions
@@ -70,7 +95,7 @@ The client uses an OpenAI-compatible chat completions payload by default:
 
 Mock mode needs no API connection:
 
-```bash
+```powershell
 cd ApertusOpt
 $env:MOCK_APERTUS="true"
 python main.py
@@ -85,12 +110,24 @@ MOCK_APERTUS=true python main.py
 
 ## Run With Apertus API
 
-Set these variables in `.env` or in your shell:
+Set these variables in `.env` or in your shell.
+
+Public AI 8B example:
 
 ```env
-APERTUS_API_URL=https://your-apertus-endpoint.example/v1/chat/completions
-APERTUS_API_KEY=your_api_key
-APERTUS_MODEL=your_model_name
+MOCK_APERTUS=false
+APERTUS_API_URL=https://api.publicai.co/v1/chat/completions
+APERTUS_API_KEY=your_public_ai_api_key
+APERTUS_MODEL=swiss-ai/apertus-v1.5-8b
+```
+
+Swisscom Apertus 1.5 70B example:
+
+```env
+MOCK_APERTUS=false
+APERTUS_API_URL=https://api.swisscom.com/products/swiss-ai-platform/apertus-1.5-70b/v1/chat/completions
+APERTUS_API_KEY=your_swisscom_api_key
+APERTUS_MODEL=swiss-ai/Apertus-v1.5-70B
 ```
 
 Then run:
@@ -107,6 +144,30 @@ If your Apertus endpoint does not use OpenAI-compatible chat completions, update
 ```bash
 cd ApertusOpt
 python -m unittest discover -s tests
+```
+
+## Demo Output
+
+In mock mode, the example problem should produce:
+
+```text
+Mathematical formulation:
+maximize
+  10*A + 14*B + 7*C
+
+subject to
+  4*A + 6*B + 3*C <= 10
+
+binary variables
+  A, B, C in {0, 1}
+
+Solution:
+{
+  "status": "OPTIMAL",
+  "selected_items": ["A", "B"],
+  "total_weight": 10,
+  "total_value": 24
+}
 ```
 
 ## Expected JSON
