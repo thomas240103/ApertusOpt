@@ -1,0 +1,100 @@
+[
+  {
+    "id": "base",
+    "text": "My backpack has capacity 10 kg. Item A weighs 4 kg and is worth 10. Item B weighs 6 kg and is worth 14. Item C weighs 3 kg and is worth 7. Select each item at most once to maximize value without exceeding capacity.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 10,
+      "items": [
+        {"name": "A", "weight": 4, "value": 10},
+        {"name": "B", "weight": 6, "value": 14},
+        {"name": "C", "weight": 3, "value": 7}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["A", "B"], "total_weight": 10, "total_value": 24}
+  },
+  {
+    "id": "capacity_7",
+    "text": "My backpack has capacity 7 kg. Item A weighs 4 kg and is worth 10. Item B weighs 6 kg and is worth 14. Item C weighs 3 kg and is worth 7. Select each item at most once to maximize value without exceeding capacity.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 7,
+      "items": [
+        {"name": "A", "weight": 4, "value": 10},
+        {"name": "B", "weight": 6, "value": 14},
+        {"name": "C", "weight": 3, "value": 7}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["A", "C"], "total_weight": 7, "total_value": 17}
+  },
+  {
+    "id": "italian",
+    "text": "Il mio zaino puo' contenere al massimo 10 kg. L'oggetto A pesa 4 kg e vale 10. L'oggetto B pesa 6 kg e vale 14. L'oggetto C pesa 3 kg e vale 7. Scegli ogni oggetto al massimo una volta per massimizzare il valore totale senza superare il limite di peso.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 10,
+      "items": [
+        {"name": "A", "weight": 4, "value": 10},
+        {"name": "B", "weight": 6, "value": 14},
+        {"name": "C", "weight": 3, "value": 7}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["A", "B"], "total_weight": 10, "total_value": 24}
+  },
+  {
+    "id": "camping",
+    "text": "My backpack can carry at most 12 kg. The tent weighs 7 kg and is worth 18. The stove weighs 3 kg and is worth 8. The jacket weighs 4 kg and is worth 9. The camera weighs 2 kg and is worth 6. Choose each item at most once to maximize value without exceeding the weight limit.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 12,
+      "items": [
+        {"name": "tent", "weight": 7, "value": 18},
+        {"name": "stove", "weight": 3, "value": 8},
+        {"name": "jacket", "weight": 4, "value": 9},
+        {"name": "camera", "weight": 2, "value": 6}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["tent", "stove", "camera"], "total_weight": 12, "total_value": 32}
+  },
+  {
+    "id": "budget",
+    "text": "I have a project budget of 15 units. Feature Search costs 6 units and has value 13. Feature Analytics costs 5 units and has value 12. Feature Export costs 4 units and has value 8. Feature Notifications costs 3 units and has value 6. Select each feature at most once to maximize value without exceeding the budget.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 15,
+      "items": [
+        {"name": "Search", "weight": 6, "value": 13},
+        {"name": "Analytics", "weight": 5, "value": 12},
+        {"name": "Export", "weight": 4, "value": 8},
+        {"name": "Notifications", "weight": 3, "value": 6}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["Search", "Analytics", "Export"], "total_weight": 15, "total_value": 33}
+  },
+  {
+    "id": "decimals",
+    "text": "My backpack has capacity 2.5 kg. Item A weighs 1.5 kg and is worth 4.5. Item B weighs 1 kg and is worth 3. Item C weighs 2 kg and is worth 6. Select each item at most once to maximize value within capacity.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 2.5,
+      "items": [
+        {"name": "A", "weight": 1.5, "value": 4.5},
+        {"name": "B", "weight": 1, "value": 3},
+        {"name": "C", "weight": 2, "value": 6}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["A", "B"], "total_weight": 2.5, "total_value": 7.5}
+  },
+  {
+    "id": "none_fit",
+    "text": "My backpack has capacity 2 kg. Item A weighs 4 kg and is worth 10. Item B weighs 6 kg and is worth 14. Item C weighs 3 kg and is worth 7. Select each item at most once to maximize value without exceeding capacity. Selecting no items is allowed.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 2,
+      "items": [
+        {"name": "A", "weight": 4, "value": 10},
+        {"name": "B", "weight": 6, "value": 14},
+        {"name": "C", "weight": 3, "value": 7}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": [], "total_weight": 0, "total_value": 0}
+  },
+  {
+    "id": "missing_weight",
+    "text": "My backpack has capacity 10 kg. Item A weighs 4 kg and is worth 10. Item B is worth 14, but its weight is not provided. Item C weighs 3 kg and is worth 7. Select each item at most once to maximize value without exceeding capacity.",
+    "expected_error_terms": [["weight", "peso"], ["B"]]
+  }
+]

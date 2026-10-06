@@ -126,8 +126,8 @@ CSCS infrastructure in Switzerland without recording prompts or responses.
 This is a starting choice, not a measured accuracy claim. After obtaining access,
 compare the 70B and 8B models on the same problems for extraction accuracy and latency.
 Pydantic checks structure and types; it does not prove that Apertus extracted the
-user's numbers correctly. Evaluation currently checks the solution against the
-generated model, not against the original text.
+user's numbers correctly. The demo checks the solution against the generated model.
+The benchmark below also compares the extraction with hand-checked reference data.
 
 To obtain access:
 
@@ -208,6 +208,54 @@ If your Apertus endpoint does not use OpenAI-compatible chat completions, update
 cd ApertusOpt
 python -m unittest discover -s tests
 ```
+
+## Reference Cases and Live Evaluation
+
+`problems/knapsack_cases.json` contains natural-language inputs, expected JSON, and
+expected solutions. Reference answers are never sent to Apertus.
+
+| Case | Expected result |
+| --- | --- |
+| `base` | A + B, weight 10, value 24 |
+| `capacity_7` | A + C, weight 7, value 17 |
+| `italian` | Same problem in Italian: A + B, value 24 |
+| `camping` | tent + stove + camera, weight 12, value 32 |
+| `budget` | Search + Analytics + Export, cost 15, value 33 |
+| `decimals` | A + B, weight 2.5, value 7.5 |
+| `none_fit` | No selected items, value 0 (still OPTIMAL) |
+| `missing_weight` | Explicit JSON error identifying the missing weight of B |
+
+Run from the repository directory:
+
+```bash
+python evaluate.py
+```
+
+This offline check feeds reference JSON to the validator and solver. It makes no
+API calls and does **not** measure Apertus: `apertus_tested` is false. Seven reference
+cases should pass; `missing_weight` is skipped because it needs a model response.
+Unit tests also verify the reference optima by enumerating every possible subset.
+
+Once the API key is configured and `MOCK_APERTUS=false`, test a single case first:
+
+```bash
+python evaluate.py --live --case capacity_7
+python evaluate.py --live
+```
+
+The full live run makes eight API calls. The JSON report distinguishes schema
+validity, exact formulation matching, and solution matching, and includes raw
+responses and elapsed time. Item order is ignored; item names and all numerical
+data must match. A correct objective alone is not enough to pass. The current
+complete cases have unique optimal selections. A new case with tied optima would
+need the solution comparison adapted to accept all valid optimal selections.
+
+For missing data, the response must be an object containing only a nonempty
+`error` string mentioning B and weight (or Italian `peso`). This is a simple
+keyword check, not a semantic assessment of the explanation. Malformed JSON,
+invented data, unrelated refusals, and API failures do not pass. The solver is
+never called for this case. Exit codes: 0 for no failures, 1 for failed cases,
+2 for configuration or CLI errors. `--live` refuses mock mode.
 
 ## Demo Output
 
