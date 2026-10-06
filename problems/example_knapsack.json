@@ -1,0 +1,22 @@
+{
+  "problem_type": "knapsack",
+  "sense": "maximize",
+  "items": [
+    {
+      "name": "A",
+      "weight": 4,
+      "value": 10
+    },
+    {
+      "name": "B",
+      "weight": 6,
+      "value": 14
+    },
+    {
+      "name": "C",
+      "weight": 3,
+      "value": 7
+    }
+  ],
+  "capacity": 10
+}
