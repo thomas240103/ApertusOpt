@@ -97,16 +97,17 @@ Mock mode needs no API connection:
 
 ```powershell
 cd ApertusOpt
-$env:MOCK_APERTUS="true"
-python main.py
+python main.py --mock
 ```
 
 On macOS or Linux:
 
 ```bash
 cd ApertusOpt
-MOCK_APERTUS=true python main.py
+python main.py --mock
 ```
+
+You can also set `MOCK_APERTUS=true` in `.env` and run `python main.py`.
 
 ## Run With Apertus API
 

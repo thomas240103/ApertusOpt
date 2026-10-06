@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import argparse
 import json
+import os
 from pathlib import Path
 
 from src.apertus_client import ApertusClient
@@ -30,7 +32,21 @@ def build_prompt(problem_text: str) -> str:
     return prompt_template.replace("{{problem_text}}", problem_text)
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run the ApertusOpt knapsack demo.")
+    parser.add_argument(
+        "--mock",
+        action="store_true",
+        help="Use the built-in mock Apertus response instead of calling an API.",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+    if args.mock:
+        os.environ["MOCK_APERTUS"] = "true"
+
     prompt = build_prompt(EXAMPLE_PROBLEM_TEXT)
     client = ApertusClient.from_env()
 
