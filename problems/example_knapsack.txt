@@ -1,0 +1,7 @@
+I have a backpack with capacity 10 kg.
+
+Item A weighs 4 kg and is worth 10.
+Item B weighs 6 kg and is worth 14.
+Item C weighs 3 kg and is worth 7.
+
+Select the items that maximize total value without exceeding the capacity.

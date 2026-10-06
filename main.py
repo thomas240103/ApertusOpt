@@ -39,11 +39,33 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use the built-in mock Apertus response instead of calling an API.",
     )
-    parser.add_argument(
+    input_group = parser.add_mutually_exclusive_group()
+    input_group.add_argument(
         "--text",
         help="Natural-language knapsack problem to parse and solve.",
     )
+    input_group.add_argument(
+        "--file",
+        help="Path to a text file containing a natural-language knapsack problem.",
+    )
     return parser.parse_args()
+
+
+def load_problem_text(args: argparse.Namespace) -> str:
+    if args.file:
+        problem_path = Path(args.file)
+        if not problem_path.is_absolute():
+            problem_path = PROJECT_ROOT / problem_path
+        try:
+            problem_text = problem_path.read_text(encoding="utf-8").strip()
+        except FileNotFoundError as exc:
+            raise SystemExit(f"Problem file not found: {problem_path}") from exc
+    else:
+        problem_text = args.text or EXAMPLE_PROBLEM_TEXT
+
+    if not problem_text:
+        raise SystemExit("Problem text is empty.")
+    return problem_text
 
 
 def main() -> None:
@@ -51,7 +73,7 @@ def main() -> None:
     if args.mock:
         os.environ["MOCK_APERTUS"] = "true"
 
-    problem_text = args.text or EXAMPLE_PROBLEM_TEXT
+    problem_text = load_problem_text(args)
     prompt = build_prompt(problem_text)
     client = ApertusClient.from_env()
 

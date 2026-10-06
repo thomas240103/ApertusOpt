@@ -1,0 +1,8 @@
+I am packing for a camping trip and my backpack can carry at most 12 kg.
+
+The tent weighs 7 kg and is worth 18.
+The stove weighs 3 kg and is worth 8.
+The jacket weighs 4 kg and is worth 9.
+The camera weighs 2 kg and is worth 6.
+
+Choose the items that maximize total value without exceeding the weight limit.

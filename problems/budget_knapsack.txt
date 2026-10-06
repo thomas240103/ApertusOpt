@@ -1,0 +1,8 @@
+I have a project budget capacity of 15 units.
+
+Feature Search costs 6 units and has value 13.
+Feature Analytics costs 5 units and has value 12.
+Feature Export costs 4 units and has value 8.
+Feature Notifications costs 3 units and has value 6.
+
+Select the features that maximize total value without exceeding the budget capacity.

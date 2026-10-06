@@ -146,6 +146,14 @@ You can pass a custom natural-language problem directly:
 python main.py --text "I have a backpack with capacity 10 kg. Item A weighs 4 kg and is worth 10. Item B weighs 6 kg and is worth 14. Item C weighs 3 kg and is worth 7. Select the items that maximize total value."
 ```
 
+Or read the problem from a text file:
+
+```bash
+python main.py --file problems/camping_knapsack.txt
+```
+
+Use either `--text` or `--file`, not both.
+
 If your Apertus endpoint does not use OpenAI-compatible chat completions, update `ApertusClient.generate()` and `_extract_text()` in `src/apertus_client.py`.
 
 ## Run Tests
