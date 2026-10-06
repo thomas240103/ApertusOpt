@@ -64,7 +64,7 @@ On PowerShell:
 Copy-Item .env.example .env
 ```
 
-For mock mode, keep:
+The template selects CSCS for real API calls. For offline mode, use `--mock` or set:
 
 ```env
 MOCK_APERTUS=true
@@ -115,22 +115,68 @@ Mock mode always returns the built-in example JSON, so it is best for testing th
 
 Set these variables in `.env` or in your shell.
 
-Public AI 8B example:
+### Selected Provider: CSCS
+
+We use CSCS with Apertus 1.5 70B as the starting model for the hackathon demo.
+The [hackathon resources](https://hackapertus.devpost.com/resources) list CSCS inference
+access for all teams. The [CSCS documentation](https://docs.cscs.ch/services/inference/api/)
+documents the OpenAI-compatible endpoint, the model below, and processing within
+CSCS infrastructure in Switzerland without recording prompts or responses.
+
+This is a starting choice, not a measured accuracy claim. After obtaining access,
+compare the 70B and 8B models on the same problems for extraction accuracy and latency.
+Pydantic checks structure and types; it does not prove that Apertus extracted the
+user's numbers correctly. Evaluation currently checks the solution against the
+generated model, not against the original text.
+
+To obtain access:
+
+1. Open the hackathon resources page and follow its Getting Started Guide for CSCS access.
+   If access is not provisioned, use the organizer Discord linked on that page.
+2. Once your team has a CSCS project with an inference resource, sign in to the
+   [Inference API UI](https://ui.inference.cscs.ch/), expand the resource, and select
+   **Add Key**. Create a key with access to the chosen Apertus model.
+3. Add the key to the local `.env` file. `.env` is ignored by Git; never add the key
+   to `.env.example` or commit it.
+
+```env
+MOCK_APERTUS=false
+APERTUS_API_URL=https://api.inference.cscs.ch/v1/chat/completions
+APERTUS_API_KEY=your_cscs_inference_api_key
+APERTUS_MODEL=swiss-ai/Apertus-v1.5-70B
+```
+
+Availability depends on your key's permissions. Check the API UI or the documented
+`GET /v1/models` endpoint if the model is unavailable. To compare the smaller model,
+change only `APERTUS_MODEL` to `swiss-ai/Apertus-v1.5-8B`.
+
+From the repository directory, run without `--mock`:
+
+```powershell
+.\.venv\Scripts\python.exe main.py --file problems\camping_knapsack.txt
+```
+
+Use `python` instead if dependencies are installed outside this virtual environment.
+Ensure `MOCK_APERTUS` is not still `true` in your shell: shell environment variables
+take precedence over `.env`. In PowerShell, clear an old override with
+`Remove-Item Env:MOCK_APERTUS -ErrorAction SilentlyContinue`.
+
+With a correct extraction, the camping example selects tent, stove, and camera for
+weight 12 and value 32. The budget example selects Search, Analytics, and Export for
+cost 15 and value 33. These are expected results for checking the live pipeline;
+they are not evidence of a successful API call. Mock mode always returns A + B,
+value 24, regardless of the input file.
+
+### Alternative Provider: Public AI
+
+Public AI uses a separate API key. Its [quick start](https://platform.publicai.co/docs)
+documents this endpoint and model:
 
 ```env
 MOCK_APERTUS=false
 APERTUS_API_URL=https://api.publicai.co/v1/chat/completions
 APERTUS_API_KEY=your_public_ai_api_key
 APERTUS_MODEL=swiss-ai/apertus-v1.5-8b
-```
-
-Swisscom Apertus 1.5 70B example:
-
-```env
-MOCK_APERTUS=false
-APERTUS_API_URL=https://api.swisscom.com/products/swiss-ai-platform/apertus-1.5-70b/v1/chat/completions
-APERTUS_API_KEY=your_swisscom_api_key
-APERTUS_MODEL=swiss-ai/Apertus-v1.5-70B
 ```
 
 Then run:
