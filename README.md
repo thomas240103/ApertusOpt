@@ -109,6 +109,8 @@ python main.py --mock
 
 You can also set `MOCK_APERTUS=true` in `.env` and run `python main.py`.
 
+Mock mode always returns the built-in example JSON, so it is best for testing the pipeline without an API key.
+
 ## Run With Apertus API
 
 Set these variables in `.env` or in your shell.
@@ -136,6 +138,12 @@ Then run:
 ```bash
 cd ApertusOpt
 python main.py
+```
+
+You can pass a custom natural-language problem directly:
+
+```bash
+python main.py --text "I have a backpack with capacity 10 kg. Item A weighs 4 kg and is worth 10. Item B weighs 6 kg and is worth 14. Item C weighs 3 kg and is worth 7. Select the items that maximize total value."
 ```
 
 If your Apertus endpoint does not use OpenAI-compatible chat completions, update `ApertusClient.generate()` and `_extract_text()` in `src/apertus_client.py`.

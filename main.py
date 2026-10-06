@@ -39,6 +39,10 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use the built-in mock Apertus response instead of calling an API.",
     )
+    parser.add_argument(
+        "--text",
+        help="Natural-language knapsack problem to parse and solve.",
+    )
     return parser.parse_args()
 
 
@@ -47,11 +51,15 @@ def main() -> None:
     if args.mock:
         os.environ["MOCK_APERTUS"] = "true"
 
-    prompt = build_prompt(EXAMPLE_PROBLEM_TEXT)
+    problem_text = args.text or EXAMPLE_PROBLEM_TEXT
+    prompt = build_prompt(problem_text)
     client = ApertusClient.from_env()
 
+    print("Problem text:")
+    print(problem_text)
+
     raw_json = client.generate(prompt)
-    print("Generated JSON:")
+    print("\nGenerated JSON:")
     print(raw_json)
 
     problem = parse_knapsack_response(raw_json)
