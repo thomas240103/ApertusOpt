@@ -30,8 +30,9 @@ The pipeline is:
 1. Natural-language problem text is inserted into `prompts/knapsack_prompt.txt`.
 2. `src/apertus_client.py` sends the prompt to an Apertus-compatible API, or returns a deterministic response in mock mode.
 3. `src/parser.py` extracts JSON, removes accidental markdown fences, parses it, and validates it with Pydantic.
-4. `src/solver.py` solves the validated 0/1 knapsack problem with Google OR-Tools.
-5. `src/evaluator.py` checks solution feasibility and reported totals.
+4. `src/formatter.py` renders the validated problem as a readable mathematical formulation.
+5. `src/solver.py` solves the validated 0/1 knapsack problem with Google OR-Tools.
+6. `src/evaluator.py` checks solution feasibility and reported totals.
 
 ## Installation
 

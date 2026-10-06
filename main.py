@@ -7,6 +7,7 @@ from pathlib import Path
 
 from src.apertus_client import ApertusClient
 from src.evaluator import evaluate_solution
+from src.formatter import format_knapsack_model
 from src.parser import parse_knapsack_response
 from src.solver import solve_knapsack
 
@@ -38,6 +39,9 @@ def main() -> None:
     print(raw_json)
 
     problem = parse_knapsack_response(raw_json)
+    print("\nMathematical formulation:")
+    print(format_knapsack_model(problem))
+
     solution = solve_knapsack(problem)
     evaluation = evaluate_solution(problem, solution)
 
