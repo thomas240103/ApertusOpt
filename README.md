@@ -221,6 +221,7 @@ expected solutions. Reference answers are never sent to Apertus.
 | `italian` | Same problem in Italian: A + B, value 24 |
 | `camping` | tent + stove + camera, weight 12, value 32 |
 | `budget` | Search + Analytics + Export, cost 15, value 33 |
+| `compound_names` | Advanced Search + Feature Search, cost 7, value 18; quoted names preserved |
 | `decimals` | A + B, weight 2.5, value 7.5 |
 | `none_fit` | No selected items, value 0 (still OPTIMAL) |
 | `missing_weight` | Explicit JSON error identifying the missing weight of B |
@@ -232,7 +233,7 @@ python evaluate.py
 ```
 
 This offline check feeds reference JSON to the validator and solver. It makes no
-API calls and does **not** measure Apertus: `apertus_tested` is false. Seven reference
+API calls and does **not** measure Apertus: `apertus_tested` is false. Eight reference
 cases should pass; `missing_weight` is skipped because it needs a model response.
 Unit tests also verify the reference optima by enumerating every possible subset.
 
@@ -243,12 +244,26 @@ python evaluate.py --live --case capacity_7
 python evaluate.py --live
 ```
 
-The full live run makes eight API calls. The JSON report distinguishes schema
+The full live run makes nine API calls. The JSON report distinguishes schema
 validity, exact formulation matching, and solution matching, and includes raw
 responses and elapsed time. Item order is ignored; item names and all numerical
 data must match. A correct objective alone is not enough to pass. The current
 complete cases have unique optimal selections. A new case with tied optima would
 need the solution comparison adapted to accept all valid optimal selections.
+
+The prompt distinguishes category labels from explicit names: `Feature Search`
+in the original budget case should yield `Search`, while a feature explicitly
+named `"Feature Search"` must retain the complete name. The `budget` input and its
+expected answer are unchanged; `compound_names` checks preservation of multiword
+names, including a name that begins with `Feature`. The evaluator still compares
+names exactly and does not strip prefixes after generation.
+
+To check just these two cases with Apertus:
+
+```bash
+python evaluate.py --live --case budget
+python evaluate.py --live --case compound_names
+```
 
 For missing data, the response must be an object containing only a nonempty
 `error` string mentioning B and weight (or Italian `peso`). This is a simple

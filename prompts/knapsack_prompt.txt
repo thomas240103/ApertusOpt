@@ -28,7 +28,19 @@ Rules:
 - Weights must be positive numbers.
 - Values must be numeric.
 - Capacity must be a positive number.
-- Preserve item names from the user text when possible.
+
+Mandatory name extraction rules, in this priority order:
+1. If a name is explicitly given in quotes, copy everything inside the quotes exactly, including all words, spelling, and capitalization. Omit only the surrounding quotation marks. This rule takes precedence even when the quoted name starts with a category word.
+2. For unquoted descriptions starting with Item, Feature, Oggetto, or Funzionalita followed by a name, remove that one introductory category label. Match the category label regardless of capitalization. In particular, "Feature" is a category label in the pattern "Feature NAME costs ..."; the item name is NAME, not Feature NAME.
+3. Preserve the rest of the name completely, including spaces, spelling, and capitalization. Do not shorten or translate multiword names.
+
+Name extraction examples (illustrations only, not extra items for the user problem):
+- Item A weighs 4 kg. -> "name": "A"
+- Feature Inventory costs 6 units. -> "name": "Inventory"
+- Feature Data Export costs 2 units. -> "name": "Data Export"
+- The feature named "Advanced Search" costs 6 units. -> "name": "Advanced Search"
+- L'oggetto chiamato "Feature Search" pesa 4 kg. -> "name": "Feature Search"
+- Use numerical data only from the user problem below, never from these examples or the schema illustration above.
 
 User problem:
 {{problem_text}}

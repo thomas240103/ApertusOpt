@@ -46,6 +46,26 @@ class TestCaseEvaluation(TestCase):
     def test_fixed_mock_fails_changed_capacity(self) -> None:
         self.assertFalse(evaluate_case(BY_ID["capacity_7"], MOCK_KNAPSACK_RESPONSE)["passed"])
 
+    def test_budget_category_prefix_still_fails_exact_name_comparison(self) -> None:
+        data = copy.deepcopy(BY_ID["budget"]["expected_problem"])
+        for item in data["items"]:
+            item["name"] = "Feature " + item["name"]
+        result = evaluate_case(BY_ID["budget"], json.dumps(data))
+        self.assertEqual(result["solution"]["total_value"], 33)
+        self.assertFalse(result["formulation_matches"])
+        self.assertFalse(result["solution_matches"])
+        self.assertFalse(result["passed"])
+
+    def test_shortened_compound_names_fail_even_when_numbers_are_correct(self) -> None:
+        for index, shortened_name in ((0, "Advanced"), (1, "Search"), (2, "Export")):
+            with self.subTest(item=index):
+                data = copy.deepcopy(BY_ID["compound_names"]["expected_problem"])
+                data["items"][index]["name"] = shortened_name
+                result = evaluate_case(BY_ID["compound_names"], json.dumps(data))
+                self.assertEqual(result["solution"]["total_value"], 18)
+                self.assertFalse(result["formulation_matches"])
+                self.assertFalse(result["passed"])
+
     def test_non_text_provider_content_fails_without_crashing(self) -> None:
         for case_id in ("base", "missing_weight"):
             for content in (None, [], {"unexpected": "content"}):
@@ -100,7 +120,7 @@ class TestEvaluationCommand(TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(report["mode"], "offline_reference")
         self.assertFalse(report["apertus_tested"])
-        self.assertEqual(report["passed"], 7)
+        self.assertEqual(report["passed"], 8)
         self.assertEqual(report["skipped"], 1)
 
     def test_live_refuses_mock_mode_and_missing_credentials(self) -> None:
