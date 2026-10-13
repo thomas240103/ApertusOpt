@@ -67,6 +67,19 @@
     "expected_solution": {"status": "OPTIMAL", "selected_items": ["Search", "Analytics", "Export"], "total_weight": 15, "total_value": 33}
   },
   {
+    "id": "compound_names",
+    "text": "I have a project budget of 7 units. The feature named \"Advanced Search\" costs 4 units and has value 10. The feature named \"Feature Search\" costs 3 units and has value 8. The feature named \"Data Export\" costs 2 units and has value 5. Select each feature at most once to maximize value without exceeding the budget.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 7,
+      "items": [
+        {"name": "Advanced Search", "weight": 4, "value": 10},
+        {"name": "Feature Search", "weight": 3, "value": 8},
+        {"name": "Data Export", "weight": 2, "value": 5}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["Advanced Search", "Feature Search"], "total_weight": 7, "total_value": 18}
+  },
+  {
     "id": "decimals",
     "text": "My backpack has capacity 2.5 kg. Item A weighs 1.5 kg and is worth 4.5. Item B weighs 1 kg and is worth 3. Item C weighs 2 kg and is worth 6. Select each item at most once to maximize value within capacity.",
     "expected_problem": {
