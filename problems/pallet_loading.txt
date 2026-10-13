@@ -1,0 +1,12 @@
+Un camion ha una capacita disponibile di 10000 kg e 25 m3 per un unico viaggio.
+Ogni pallet e' indivisibile, facoltativo e disponibile una sola volta.
+Tutti i pallet sono compatibili e diretti allo stesso deposito.
+
+Pallet A: peso 4000 kg, volume 12 m3, margine di profitto 300 EUR.
+Pallet B: peso 3500 kg, volume 10 m3, margine di profitto 280 EUR.
+Pallet C: peso 3000 kg, volume 8 m3, margine di profitto 220 EUR.
+Pallet D: peso 2500 kg, volume 6 m3, margine di profitto 200 EUR.
+Pallet E: peso 2000 kg, volume 5 m3, margine di profitto 120 EUR.
+
+Scegli quali pallet caricare per massimizzare il margine totale senza superare
+ne' il peso ne' il volume disponibili. Non serve calcolare la disposizione fisica.
