@@ -17,6 +17,16 @@ def format_knapsack_model(problem: KnapsackProblem) -> str:
         for item, variable in zip(problem.items, variable_names)
     ]
 
+    volume_constraint = []
+    if problem.volume_capacity is not None:
+        volume_terms = [
+            (_clean_number(item.volume), variable)
+            for item, variable in zip(problem.items, variable_names)
+        ]
+        volume_constraint = [
+            f"  {_format_linear_expression(volume_terms)} <= {_clean_number(problem.volume_capacity)}"
+        ]
+
     return "\n".join(
         [
             "maximize",
@@ -27,6 +37,7 @@ def format_knapsack_model(problem: KnapsackProblem) -> str:
                 f"  {_format_linear_expression(weight_terms)} "
                 f"<= {_clean_number(problem.capacity)}"
             ),
+            *volume_constraint,
             "",
             "binary variables",
             f"  {', '.join(variable_names)} in {{0, 1}}",

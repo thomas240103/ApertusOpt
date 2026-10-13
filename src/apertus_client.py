@@ -25,6 +25,21 @@ MOCK_KNAPSACK_RESPONSE = json.dumps(
     indent=2,
 )
 
+MOCK_PALLET_RESPONSE = json.dumps(
+    {
+        "problem_type": "knapsack", "sense": "maximize",
+        "capacity": 10000, "volume_capacity": 25,
+        "items": [
+            {"name": "A", "weight": 4000, "volume": 12, "value": 300},
+            {"name": "B", "weight": 3500, "volume": 10, "value": 280},
+            {"name": "C", "weight": 3000, "volume": 8, "value": 220},
+            {"name": "D", "weight": 2500, "volume": 6, "value": 200},
+            {"name": "E", "weight": 2000, "volume": 5, "value": 120},
+        ],
+    },
+    indent=2,
+)
+
 
 @dataclass(frozen=True)
 class ApertusClient:
@@ -34,20 +49,22 @@ class ApertusClient:
     api_key: str | None
     model: str
     timeout_seconds: int = 60
+    mock_response: str = MOCK_KNAPSACK_RESPONSE
 
     @classmethod
-    def from_env(cls) -> "ApertusClient":
+    def from_env(cls, *, pallets: bool = False) -> "ApertusClient":
         load_dotenv()
         return cls(
             api_url=os.getenv("APERTUS_API_URL", "").strip(),
             api_key=os.getenv("APERTUS_API_KEY"),
             model=os.getenv("APERTUS_MODEL", "apertus").strip(),
+            mock_response=MOCK_PALLET_RESPONSE if pallets else MOCK_KNAPSACK_RESPONSE,
         )
 
     def generate(self, prompt: str) -> str:
         """Generate raw text from Apertus, or a deterministic response in mock mode."""
         if os.getenv("MOCK_APERTUS", "").lower() == "true":
-            return MOCK_KNAPSACK_RESPONSE
+            return self.mock_response
 
         if not self.api_url:
             raise ValueError(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 from ortools.sat.python import cp_model
@@ -17,66 +18,54 @@ def solve_knapsack(problem: KnapsackProblem) -> dict[str, Any]:
         for item in problem.items
     ]
 
-    scale = _numeric_scale(
-        [problem.capacity]
-        + [item.weight for item in problem.items]
-        + [item.value for item in problem.items]
+    capacity, *weights = _scaled_integers(
+        [problem.capacity] + [item.weight for item in problem.items]
     )
-    weights = [_to_int(item.weight, scale) for item in problem.items]
-    values = [_to_int(item.value, scale) for item in problem.items]
-    capacity = _to_int(problem.capacity, scale)
+    values = _scaled_integers([item.value for item in problem.items])
 
     model.add(sum(weights[i] * selected[i] for i in range(len(selected))) <= capacity)
+    if problem.volume_capacity is not None:
+        volume_capacity, *volumes = _scaled_integers(
+            [problem.volume_capacity] + [item.volume for item in problem.items]
+        )
+        model.add(sum(volumes[i] * selected[i] for i in range(len(selected))) <= volume_capacity)
     model.maximize(sum(values[i] * selected[i] for i in range(len(selected))))
 
     solver = cp_model.CpSolver()
     status = solver.solve(model)
 
-    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-        return {
-            "status": solver.status_name(status),
-            "selected_items": [],
-            "total_weight": 0,
-            "total_value": 0,
-        }
-
-    selected_items = [
-        item.name for item, variable in zip(problem.items, selected) if solver.value(variable)
-    ]
-    total_weight = sum(
-        item.weight
-        for item, variable in zip(problem.items, selected)
-        if solver.value(variable)
-    )
-    total_value = sum(
-        item.value for item, variable in zip(problem.items, selected) if solver.value(variable)
-    )
-
-    return {
+    chosen = []
+    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        chosen = [
+            item for item, variable in zip(problem.items, selected) if solver.value(variable)
+        ]
+    result = {
         "status": solver.status_name(status),
-        "selected_items": selected_items,
-        "total_weight": _clean_number(total_weight),
-        "total_value": _clean_number(total_value),
+        "selected_items": [item.name for item in chosen],
+        "total_weight": _total([item.weight for item in chosen]),
+        "total_value": _total([item.value for item in chosen]),
     }
+    if problem.volume_capacity is not None:
+        result["total_volume"] = _total([item.volume for item in chosen])
+    return result
 
 
 def _safe_var_name(name: str) -> str:
     return "".join(char if char.isalnum() else "_" for char in name)
 
 
-def _numeric_scale(values: list[float]) -> int:
-    """Find a decimal scale so CP-SAT can handle decimal inputs as integers."""
-    max_decimal_places = 0
-    for value in values:
-        text = f"{value:.10f}".rstrip("0").rstrip(".")
-        if "." in text:
-            max_decimal_places = max(max_decimal_places, len(text.split(".")[1]))
-    return 10**max_decimal_places
+def _scaled_integers(values: list[float]) -> list[int]:
+    """Scale each constraint separately; never silently round away a limit."""
+    decimals = [Decimal(str(value)) for value in values]
+    places = max(0, max(-value.as_tuple().exponent for value in decimals))
+    if places > 10:
+        raise ValueError("At most 10 decimal places are supported by the solver.")
+    integers = [int(value * 10**places) for value in decimals]
+    if sum(abs(value) for value in integers) > (1 << 62) - 1:
+        raise ValueError("Scaled numbers are too large for the integer solver.")
+    return integers
 
 
-def _to_int(value: float, scale: int) -> int:
-    return int(round(value * scale))
-
-
-def _clean_number(value: float) -> int | float:
-    return int(value) if float(value).is_integer() else value
+def _total(values: list[float]) -> int | float:
+    total = sum((Decimal(str(value)) for value in values), Decimal(0))
+    return int(total) if total == total.to_integral_value() else float(total)
