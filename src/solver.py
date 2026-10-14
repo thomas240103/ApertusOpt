@@ -10,7 +10,7 @@ from ortools.sat.python import cp_model
 from src.schemas import KnapsackProblem
 
 
-def solve_knapsack(problem: KnapsackProblem) -> dict[str, Any]:
+def solve_knapsack(problem: KnapsackProblem, *, time_limit: float | None = None) -> dict[str, Any]:
     """Solve a validated 0/1 knapsack problem with OR-Tools CP-SAT."""
     model = cp_model.CpModel()
     selected = [
@@ -32,6 +32,10 @@ def solve_knapsack(problem: KnapsackProblem) -> dict[str, Any]:
     model.maximize(sum(values[i] * selected[i] for i in range(len(selected))))
 
     solver = cp_model.CpSolver()
+    if time_limit is not None:
+        if not 0 < time_limit <= 300:
+            raise ValueError("Time limit must be between 0 and 300 seconds.")
+        solver.parameters.max_time_in_seconds = time_limit
     status = solver.solve(model)
 
     chosen = []

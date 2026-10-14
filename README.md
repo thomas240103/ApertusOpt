@@ -1,5 +1,51 @@
 # ApertusOpt
 
+## Local Web Interface
+
+The English load planner runs on the existing Python dependencies:
+
+```powershell
+& ".\.venv\Scripts\python.exe" web_app.py
+```
+
+Open http://127.0.0.1:8765. If the port is occupied, use `--port 8766`.
+An alternative environment file can be selected with `--env-file PATH`.
+
+1. Load the example, or select **Apertus API** and enter a description (English or Italian).
+2. Choose **Extract data**. Demo mode always returns the fixed example, even for different text.
+3. Review and edit pallet names, weights (kg), volumes (m3), margins (EUR), and both truck capacities.
+4. Confirm the data and choose **Optimize load**.
+5. Inspect selected/excluded pallets, capacity allocation, a deterministic English summary,
+   elapsed solver time, and margin change versus the previous run. Download the verified JSON report.
+
+Editing data invalidates the displayed solution and requires confirmation again. Changing the
+description or extraction mode requires a new extraction. Comparisons are session-local, compare
+the two reported objective values only, and do not establish why a pallet was excluded.
+No history is persisted. Reloading clears the comparison.
+
+API keys stay on the Python server in `.env`; they are never sent to the browser.
+Live extraction requires the existing Apertus configuration and `MOCK_APERTUS=false`.
+The text is sent only when **Extract data** is clicked in API mode. Editing and solving do not
+call the LLM. Extracted data must be checked against the description: schema validation alone
+cannot establish semantic correctness. API/parse failures show a sanitized error.
+
+This is a loopback-only development server, not a public deployment. It rejects cross-origin
+requests and unexpected Host headers, serves only allowlisted assets, limits request size and
+allows only one API/solver job at a time. Do not expose it through a tunnel or proxy.
+The UI accepts at most 500 pallets. OR-Tools has a 10-second solve limit in the web app;
+**FEASIBLE** is explicitly distinguished from **OPTIMAL**. There is still no 3D packing,
+stacking, axle-load or load-safety model. The original command-line workflow is unchanged.
+
+Run all tests and a reproducible solver-only performance sample:
+
+```powershell
+& ".\.venv\Scripts\python.exe" -m unittest discover -s tests
+& ".\.venv\Scripts\python.exe" benchmark_solver.py
+```
+
+The benchmark uses seeded synthetic sets of 50, 100 and 500 pallets. Timings depend on hardware
+and instance difficulty; these are not worst-case guarantees or Apertus extraction measurements.
+
 ApertusOpt is a starter project for converting a natural-language optimization problem into a structured mathematical optimization model, validating it, solving it with a mathematical solver, and evaluating the result.
 
 The MVP supports 0/1 knapsack selection: the original one-capacity examples and
