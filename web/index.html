@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ApertusOpt | Load planner</title>
+  <link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/">Apertus<span>Opt</span></a><span class="divider">/</span><span>Load planner</span><span class="local">Local workspace</span></header>
+  <main>
+    <div class="page-title"><div><p class="eyebrow">SINGLE TRUCK / WHOLE PALLETS</p><h1>Load planning</h1></div><span class="engine">OR-Tools CP-SAT</span></div>
+    <div id="message" role="status" aria-live="polite" hidden></div>
+    <div class="workspace">
+      <section class="brief" aria-labelledby="brief-title">
+        <div class="section-title"><h2 id="brief-title"><span class="step">01</span> Problem brief</h2><button id="example" class="quiet">Load example</button></div>
+        <fieldset class="mode"><legend>Extraction source</legend><label><input type="radio" name="mode" value="demo" checked>Demo</label><label><input type="radio" name="mode" value="live">Apertus API</label></fieldset>
+        <p id="mode-note" class="notice">Demo uses fixed example data, not your description.</p>
+        <label class="field-label" for="description">Problem description</label>
+        <textarea id="description" maxlength="16000" rows="13" placeholder="Describe the truck capacity and the weight, volume and margin of each pallet."></textarea>
+        <button id="extract" class="primary full">Extract data</button>
+        <div class="metadata"><span id="extraction-time">No extraction yet</span><span>Text → JSON</span></div>
+      </section>
+      <section class="data" aria-labelledby="data-title">
+        <div class="section-title"><h2 id="data-title"><span class="step">02</span> Confirmed data</h2><span id="source" class="tag">Example data</span></div>
+        <form id="data-form">
+          <fieldset class="capacities"><legend>Available truck capacity</legend><label>Payload <span>kg</span><input id="capacity" type="number" min="0.0000000001" step="any" required></label><label>Volume <span>m³</span><input id="volume-capacity" type="number" min="0.0000000001" step="any" required></label></fieldset>
+          <div class="table-heading"><h3>Pallet inventory <span id="count">0</span></h3><button type="button" id="add" class="quiet">+ Add pallet</button></div>
+          <div class="table-scroll"><table><thead><tr><th scope="col">Pallet</th><th scope="col">Weight <small>kg</small></th><th scope="col">Volume <small>m³</small></th><th scope="col">Margin <small>EUR</small></th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody id="items"></tbody></table></div>
+          <div class="confirm-row"><label><input id="confirm" type="checkbox" required> I confirm the data and capacities above.</label><button id="solve" class="primary" type="submit">Optimize load</button></div>
+        </form>
+        <p class="scope">One truck. Optional, indivisible pallets. Weight and total volume only; not a 3D packing or load-safety assessment.</p>
+      </section>
+    </div>
+    <section class="results" aria-labelledby="result-title">
+      <div class="section-title"><h2 id="result-title"><span class="step">03</span> Load plan</h2><div class="result-actions"><span id="status" class="tag">Awaiting optimization</span><button id="download" class="quiet" disabled>Download JSON</button></div></div>
+      <div id="empty" class="empty"><div class="empty-symbol" aria-hidden="true">—</div><p id="empty-text">No verified load plan yet.</p></div>
+      <div id="result" hidden>
+        <div class="metrics"><div><p>Total margin</p><strong id="margin"></strong><small id="comparison"></small></div><div><p>Payload used</p><strong id="weight"></strong><small id="weight-left"></small></div><div><p>Volume used</p><strong id="volume"></strong><small id="volume-left"></small></div><div><p>Pallets selected</p><strong id="selected-count"></strong><small id="solve-time"></small></div></div>
+        <div class="result-detail"><div><h3>Capacity allocation</h3><canvas id="allocation" role="img" aria-label="Selected pallets and remaining truck capacity"></canvas><div id="legend"></div></div><div class="decision"><h3>Decision summary</h3><p id="summary"></p><dl><dt>Selected</dt><dd id="selected"></dd><dt>Not selected</dt><dd id="excluded"></dd></dl><p class="verified">Feasibility and totals verified</p></div></div>
+      </div>
+    </section>
+    <footer><span>Apertus interprets. OR-Tools optimizes.</span><span>Review extracted data before relying on a result.</span></footer>
+  </main>
+</body>
+</html>
