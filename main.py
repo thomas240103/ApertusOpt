@@ -5,7 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from decimal import Decimal
 from pathlib import Path
+
+import requests
 
 from src.apertus_client import ApertusClient
 from src.evaluator import evaluate_solution
@@ -25,8 +28,9 @@ Item C weighs 3 kg and is worth 7.
 Select the items that maximize total value without exceeding the capacity."""
 
 
-def build_prompt(problem_text: str) -> str:
-    prompt_template = (PROJECT_ROOT / "prompts" / "knapsack_prompt.txt").read_text(
+def build_prompt(problem_text: str, *, pallets: bool = False) -> str:
+    filename = "pallet_prompt.txt" if pallets else "knapsack_prompt.txt"
+    prompt_template = (PROJECT_ROOT / "prompts" / filename).read_text(
         encoding="utf-8"
     )
     return prompt_template.replace("{{problem_text}}", problem_text)
@@ -34,6 +38,8 @@ def build_prompt(problem_text: str) -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the ApertusOpt knapsack demo.")
+    parser.add_argument("--pallets", action="store_true",
+                        help="Select whole pallets within weight (kg) and volume (m3) limits.")
     parser.add_argument(
         "--mock",
         action="store_true",
@@ -61,7 +67,12 @@ def load_problem_text(args: argparse.Namespace) -> str:
         except FileNotFoundError as exc:
             raise SystemExit(f"Problem file not found: {problem_path}") from exc
     else:
-        problem_text = args.text or EXAMPLE_PROBLEM_TEXT
+        if args.text is not None:
+            problem_text = args.text.strip()
+        elif args.pallets:
+            problem_text = (PROJECT_ROOT / "problems" / "pallet_loading.txt").read_text(encoding="utf-8")
+        else:
+            problem_text = EXAMPLE_PROBLEM_TEXT
 
     if not problem_text:
         raise SystemExit("Problem text is empty.")
@@ -74,17 +85,19 @@ def main() -> None:
         os.environ["MOCK_APERTUS"] = "true"
 
     problem_text = load_problem_text(args)
-    prompt = build_prompt(problem_text)
-    client = ApertusClient.from_env()
+    prompt = build_prompt(problem_text, pallets=args.pallets)
+    client = ApertusClient.from_env(pallets=args.pallets)
 
     print("Problem text:")
     print(problem_text)
+    if os.getenv("MOCK_APERTUS", "").lower() == "true":
+        print("\nMOCK MODE: fixed example response; custom input is not interpreted.")
 
     raw_json = client.generate(prompt)
     print("\nGenerated JSON:")
     print(raw_json)
 
-    problem = parse_knapsack_response(raw_json)
+    problem = parse_knapsack_response(raw_json, require_volume=args.pallets)
     print("\nMathematical formulation:")
     print(format_knapsack_model(problem))
 
@@ -96,7 +109,23 @@ def main() -> None:
 
     print("\nEvaluation:")
     print(json.dumps(evaluation, indent=2))
+    if args.pallets and solution["status"] in ("OPTIMAL", "FEASIBLE"):
+        print("\nPallet load summary:")
+        print(json.dumps({
+            "selected_pallets": solution["selected_items"],
+            "total_weight_kg": solution["total_weight"],
+            "total_volume_m3": solution["total_volume"],
+            "total_profit_eur": solution["total_value"],
+            "remaining_weight_kg": float(Decimal(str(problem.capacity)) - Decimal(str(solution["total_weight"]))),
+            "remaining_volume_m3": float(Decimal(str(problem.volume_capacity)) - Decimal(str(solution["total_volume"]))),
+        }, indent=2))
+        print("Selection only: volume sums do not certify 3D fit, stacking or load safety.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except requests.RequestException as exc:
+        raise SystemExit(f"Apertus API request failed ({type(exc).__name__}).") from None
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None

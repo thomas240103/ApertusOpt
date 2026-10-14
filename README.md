@@ -2,7 +2,9 @@
 
 ApertusOpt is a starter project for converting a natural-language optimization problem into a structured mathematical optimization model, validating it, solving it with a mathematical solver, and evaluating the result.
 
-The first MVP supports only the 0/1 Knapsack Problem.
+The MVP supports 0/1 knapsack selection: the original one-capacity examples and
+whole-pallet selection with both weight and volume limits. It does not support
+general optimization, multiple trucks, divisible goods or product quantities.
 
 The key idea is separation of responsibilities: Apertus translates human language into structured JSON, Pydantic validates the generated model, and OR-Tools computes the optimal solution. The LLM is not asked to solve the optimization problem.
 
@@ -29,7 +31,8 @@ Optimal Solution
 
 The pipeline is:
 
-1. Natural-language problem text is inserted into `prompts/knapsack_prompt.txt`.
+1. Natural-language problem text is inserted into `prompts/knapsack_prompt.txt`,
+   or `prompts/pallet_prompt.txt` when `--pallets` is selected.
 2. `src/apertus_client.py` sends the prompt to an Apertus-compatible API, or returns a deterministic response in mock mode.
 3. `src/parser.py` extracts JSON, removes accidental markdown fences, parses it, and validates it with Pydantic.
 4. `src/formatter.py` renders the validated problem as a readable mathematical formulation.
@@ -37,6 +40,102 @@ The pipeline is:
 6. `src/evaluator.py` checks solution feasibility and reported totals.
 
 The command-line demo prints every major step: generated JSON, readable mathematical formulation, solver result, and evaluation.
+
+## Truck Pallet Selection
+
+Choose optional, indivisible pallets for a single journey to one destination.
+Each row identifies one physical pallet, available once. If two pallets contain
+the same product, give them different identifiers. The objective is to maximize
+the sum of the supplied profit margins, not to maximize weight or sales revenue.
+Margins are input data: Apertus must not estimate them.
+
+The JSON keeps the original `knapsack` structure and adds a second constraint:
+
+```json
+{
+  "problem_type": "knapsack",
+  "sense": "maximize",
+  "capacity": 1000,
+  "volume_capacity": 5,
+  "items": [
+    {"name": "A", "weight": 400, "volume": 1.2, "value": 80}
+  ]
+}
+```
+
+In pallet mode, `weight` and `capacity` are kg, `volume` and `volume_capacity`
+are m3, and `value` is the total margin for that pallet in EUR. Both available
+capacities and every pallet's weight, volume and margin are required. Explicit
+units can be converted by the prompt; missing or ambiguous data must produce
+an error instead of assumptions. Validate the extracted numbers before relying
+on a result: Pydantic validates the model, not its fidelity to the original text.
+
+For every pallet i, the solver chooses x_i in {0, 1}:
+
+```text
+maximize sum(margin_i * x_i)
+subject to sum(weight_i * x_i) <= available_weight
+           sum(volume_i * x_i) <= available_volume
+```
+
+The two constraints use independently scaled integers for
+[OR-Tools CP-SAT](https://developers.google.com/optimization/cp/cp_solver).
+Numbers requiring more than 10 decimal places or exceeding the safe scaled
+integer range are rejected rather than silently rounded. Negative margins
+are allowed, and loading nothing is a valid choice.
+
+From the repository folder, after installing dependencies:
+
+```powershell
+# Offline demonstration, no API call:
+& ".\.venv\Scripts\python.exe" main.py --pallets --mock
+
+# Real Apertus extraction (configure .env and MOCK_APERTUS=false):
+& ".\.venv\Scripts\python.exe" main.py --pallets
+
+# Your own description, including both available truck capacities:
+& ".\.venv\Scripts\python.exe" main.py --pallets --file problems\pallet_loading.txt
+
+# Pallet reference checks, then the real-model benchmark:
+& ".\.venv\Scripts\python.exe" evaluate.py --pallets
+& ".\.venv\Scripts\python.exe" evaluate.py --pallets --live
+```
+
+Use `python` instead of the Windows executable path when appropriate. `--text`
+also works with `--pallets`. The pallet mock always returns the fixed truck
+example, even for custom text; it tests the pipeline, not language understanding.
+
+The supplied demo has 10000 kg and 25 m3 available:
+
+| Pallet | Weight (kg) | Volume (m3) | Margin (EUR) |
+| --- | ---: | ---: | ---: |
+| A | 4000 | 12 | 300 |
+| B | 3500 | 10 | 280 |
+| C | 3000 | 8 | 220 |
+| D | 2500 | 6 | 200 |
+| E | 2000 | 5 | 120 |
+
+Expected optimum: **B + C + D**, weight **9000 kg**, volume **24 m3**, margin
+**700 EUR**. Available capacity left: 1000 kg and 1 m3. Weight alone would select
+A + B + D for 780 EUR, but that load needs 28 m3 and violates the volume limit.
+The original solution keys are retained: `selected_items`, `total_weight`,
+`total_value`, plus `total_volume`. The CLI also prints a pallet summary with
+units, `total_profit_eur` and remaining capacities.
+
+`problems/pallet_cases.json` is a separate development suite: 5 complete cases
+(demo, weight-limited, volume-limited, decimals/quoted names, nothing fits) and
+2 missing-data cases. Offline evaluation expects 5 passes and 2 skips; a full
+live run makes 7 API calls and must explicitly identify missing data. These are
+development checks, not a held-out estimate of real-world accuracy. Unit tests
+also compare small generated problems against exhaustive enumeration.
+
+**Scope:** all pallets are compatible and optional. This is selection under
+aggregate limits, not a physical loading plan. Total volume alone does not
+guarantee geometric fit, stackability, axle balance or safe loading. No routes,
+delivery deadlines, multiple trucks or loading certification are calculated.
+The prompt rejects unsupported constraints, but a valid JSON response cannot
+prove that an LLM noticed every constraint. Do not use this prototype as an
+operational loading or safety decision system.
 
 ## Installation
 
@@ -109,7 +208,8 @@ python main.py --mock
 
 You can also set `MOCK_APERTUS=true` in `.env` and run `python main.py`.
 
-Mock mode always returns the built-in example JSON, so it is best for testing the pipeline without an API key.
+Without `--pallets`, mock mode always returns the original backpack JSON.
+With `--pallets`, it returns the fixed truck example above.
 
 ## Run With Apertus API
 
@@ -164,7 +264,7 @@ take precedence over `.env`. In PowerShell, clear an old override with
 With a correct extraction, the camping example selects tent, stove, and camera for
 weight 12 and value 32. The budget example selects Search, Analytics, and Export for
 cost 15 and value 33. These are expected results for checking the live pipeline;
-they are not evidence of a successful API call. Mock mode always returns A + B,
+they are not evidence of a successful API call. Without `--pallets`, mock mode always returns A + B,
 value 24, regardless of the input file.
 
 ### Alternative Provider: Public AI

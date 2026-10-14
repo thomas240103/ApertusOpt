@@ -1,0 +1,78 @@
+[
+  {
+    "id": "truck_demo",
+    "text": "Un camion ha capacita disponibile 10000 kg e 25 m3. Pallet A: 4000 kg, 12 m3, margine 300 EUR. Pallet B: 3500 kg, 10 m3, margine 280 EUR. Pallet C: 3000 kg, 8 m3, margine 220 EUR. Pallet D: 2500 kg, 6 m3, margine 200 EUR. Pallet E: 2000 kg, 5 m3, margine 120 EUR. Ogni pallet e' facoltativo, indivisibile e disponibile una sola volta. Tutti sono compatibili e diretti allo stesso deposito. Massimizza il margine totale rispettando peso e volume.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 10000, "volume_capacity": 25,
+      "items": [
+        {"name": "A", "weight": 4000, "volume": 12, "value": 300},
+        {"name": "B", "weight": 3500, "volume": 10, "value": 280},
+        {"name": "C", "weight": 3000, "volume": 8, "value": 220},
+        {"name": "D", "weight": 2500, "volume": 6, "value": 200},
+        {"name": "E", "weight": 2000, "volume": 5, "value": 120}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["B", "C", "D"], "total_weight": 9000, "total_volume": 24, "total_value": 700}
+  },
+  {
+    "id": "weight_limited",
+    "text": "One truck has 5 kg and 100 m3 available. Pallet A weighs 4 kg, occupies 2 m3 and has margin 10 EUR. Pallet B weighs 3 kg, occupies 1 m3 and has margin 8 EUR. Pallet C weighs 2 kg, occupies 1 m3 and has margin 5 EUR. Select optional indivisible compatible pallets, each at most once, for one destination to maximize margin within both limits.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 5, "volume_capacity": 100,
+      "items": [
+        {"name": "A", "weight": 4, "volume": 2, "value": 10},
+        {"name": "B", "weight": 3, "volume": 1, "value": 8},
+        {"name": "C", "weight": 2, "volume": 1, "value": 5}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["B", "C"], "total_weight": 5, "total_volume": 2, "total_value": 13}
+  },
+  {
+    "id": "volume_limited",
+    "text": "One truck has available payload 100 kg and space 5 m3. Pallet A weighs 1 kg, occupies 4 m3 and has margin 10 EUR. Pallet B weighs 1 kg, occupies 3 m3 and has margin 8 EUR. Pallet C weighs 1 kg, occupies 2 m3 and has margin 5 EUR. All are optional indivisible compatible pallets for one destination, available once. Maximize total margin within both limits.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 100, "volume_capacity": 5,
+      "items": [
+        {"name": "A", "weight": 1, "volume": 4, "value": 10},
+        {"name": "B", "weight": 1, "volume": 3, "value": 8},
+        {"name": "C", "weight": 1, "volume": 2, "value": 5}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["B", "C"], "total_weight": 2, "total_volume": 5, "total_value": 13}
+  },
+  {
+    "id": "decimal_names",
+    "text": "Un camion dispone di 300 kg e 0.3 m3. Il pallet chiamato \"Pallet Ricambi\" pesa 100 kg, occupa 0.1 m3 e ha margine 10.1 EUR. Il pallet chiamato \"Scorte Nord\" pesa 200 kg, occupa 0.2 m3 e ha margine 20.2 EUR. Il pallet chiamato \"Extra\" pesa 150 kg, occupa 0.25 m3 e ha margine 25 EUR. Tutti sono facoltativi, indivisibili, compatibili, disponibili una sola volta e per lo stesso deposito. Massimizza il margine rispettando peso e volume.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 300, "volume_capacity": 0.3,
+      "items": [
+        {"name": "Pallet Ricambi", "weight": 100, "volume": 0.1, "value": 10.1},
+        {"name": "Scorte Nord", "weight": 200, "volume": 0.2, "value": 20.2},
+        {"name": "Extra", "weight": 150, "volume": 0.25, "value": 25}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": ["Pallet Ricambi", "Scorte Nord"], "total_weight": 300, "total_volume": 0.3, "total_value": 30.3}
+  },
+  {
+    "id": "nothing_fits",
+    "text": "One truck has 1000 kg payload and 3 m3 available. Pallet A weighs 1100 kg, occupies 1 m3 and has margin 100 EUR. Pallet B weighs 500 kg, occupies 4 m3 and has margin 150 EUR. Both pallets are optional, indivisible, compatible and available once for one destination. Maximize total margin respecting both limits; an empty selection is allowed.",
+    "expected_problem": {
+      "problem_type": "knapsack", "sense": "maximize", "capacity": 1000, "volume_capacity": 3,
+      "items": [
+        {"name": "A", "weight": 1100, "volume": 1, "value": 100},
+        {"name": "B", "weight": 500, "volume": 4, "value": 150}
+      ]
+    },
+    "expected_solution": {"status": "OPTIMAL", "selected_items": [], "total_weight": 0, "total_volume": 0, "total_value": 0}
+  },
+  {
+    "id": "missing_volume",
+    "text": "Un camion ha 1000 kg e 5 m3 disponibili. Il pallet A pesa 400 kg, occupa 2 m3 e ha margine 100 EUR. Il pallet B pesa 300 kg e ha margine 80 EUR, ma il suo volume non e' fornito. I pallet sono facoltativi, indivisibili, compatibili e disponibili una sola volta per un solo deposito. Massimizza il margine rispettando peso e spazio.",
+    "expected_error_terms": [["volume"], ["B"]]
+  },
+  {
+    "id": "missing_truck_space",
+    "text": "A truck has available payload 1000 kg but its available cargo volume is not provided. Pallet A weighs 400 kg, occupies 2 m3 and has profit margin 100 EUR. It is optional, indivisible and available once for one destination. Maximize margin within both weight and volume limits.",
+    "expected_error_terms": [["volume", "space", "spazio", "volume_capacity"], ["truck", "camion", "volume_capacity"]]
+  }
+]

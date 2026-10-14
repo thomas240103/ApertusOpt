@@ -15,19 +15,21 @@ from src.evaluator import evaluate_case
 
 
 def main() -> None:
-    cases = json.loads(
-        (PROJECT_ROOT / "problems" / "knapsack_cases.json").read_text(encoding="utf-8")
-    )
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--pallets", action="store_true", help="Evaluate the weight-and-volume pallet cases.")
     parser.add_argument("--live", action="store_true", help="Call the real Apertus API.")
-    parser.add_argument("--case", choices=[case["id"] for case in cases])
+    parser.add_argument("--case", help="Evaluate one case ID from the selected suite.")
     args = parser.parse_args()
+    filename = "pallet_cases.json" if args.pallets else "knapsack_cases.json"
+    cases = json.loads((PROJECT_ROOT / "problems" / filename).read_text(encoding="utf-8"))
     if args.case:
+        if args.case not in {case["id"] for case in cases}:
+            parser.error(f"Unknown case {args.case!r}. Choose from: {', '.join(case['id'] for case in cases)}")
         cases = [case for case in cases if case["id"] == args.case]
 
     client = None
     if args.live:
-        client = ApertusClient.from_env()
+        client = ApertusClient.from_env(pallets=args.pallets)
         if os.getenv("MOCK_APERTUS", "").lower() == "true":
             parser.error("Set MOCK_APERTUS=false before using --live.")
         if not client.api_url or not client.api_key or not client.api_key.strip():
@@ -44,7 +46,7 @@ def main() -> None:
         started = perf_counter()
         if client is not None:
             try:
-                raw_response = client.generate(build_prompt(case["text"]))
+                raw_response = client.generate(build_prompt(case["text"], pallets=args.pallets))
             except (requests.RequestException, ValueError) as exc:
                 # Keep credentials and provider response bodies out of reports.
                 results.append({"id": case["id"], "passed": False,

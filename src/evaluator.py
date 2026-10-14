@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from decimal import Decimal
 from typing import Any
 
 from src.parser import ParseError, extract_json, parse_knapsack_response, strip_code_fences
@@ -17,17 +18,33 @@ def evaluate_solution(problem: KnapsackProblem, solution: dict[str, Any]) -> dic
     selected_names = solution.get("selected_items", [])
 
     unknown_items = [name for name in selected_names if name not in items_by_name]
-    total_weight = sum(items_by_name[name].weight for name in selected_names if name in items_by_name)
-    total_value = sum(items_by_name[name].value for name in selected_names if name in items_by_name)
+    duplicate_items = sorted({name for name in selected_names if selected_names.count(name) > 1})
+    chosen = [items_by_name[name] for name in selected_names if name in items_by_name]
+    total_weight = sum((Decimal(str(item.weight)) for item in chosen), Decimal(0))
+    total_value = sum((Decimal(str(item.value)) for item in chosen), Decimal(0))
+    weight_ok = total_weight <= Decimal(str(problem.capacity))
 
-    return {
-        "is_feasible": not unknown_items and total_weight <= problem.capacity,
+    result = {
+        "is_feasible": (solution.get("status") in ("OPTIMAL", "FEASIBLE")
+                        and not unknown_items and not duplicate_items and weight_ok),
         "unknown_items": unknown_items,
-        "reported_total_weight_matches": total_weight == solution.get("total_weight"),
-        "reported_total_value_matches": total_value == solution.get("total_value"),
-        "computed_total_weight": int(total_weight) if float(total_weight).is_integer() else total_weight,
-        "computed_total_value": int(total_value) if float(total_value).is_integer() else total_value,
+        "duplicate_items": duplicate_items,
+        "weight_within_capacity": weight_ok,
+        "reported_total_weight_matches": float(total_weight) == solution.get("total_weight"),
+        "reported_total_value_matches": float(total_value) == solution.get("total_value"),
+        "computed_total_weight": float(total_weight),
+        "computed_total_value": float(total_value),
     }
+    if problem.volume_capacity is not None:
+        total_volume = sum((Decimal(str(item.volume)) for item in chosen), Decimal(0))
+        volume_ok = total_volume <= Decimal(str(problem.volume_capacity))
+        result.update({
+            "is_feasible": result["is_feasible"] and volume_ok,
+            "volume_within_capacity": volume_ok,
+            "reported_total_volume_matches": float(total_volume) == solution.get("total_volume"),
+            "computed_total_volume": float(total_volume),
+        })
+    return result
 
 
 def evaluate_case(case: dict[str, Any], raw_response: str) -> dict[str, Any]:
@@ -58,7 +75,9 @@ def evaluate_case(case: dict[str, Any], raw_response: str) -> dict[str, Any]:
                 "message": message}
 
     try:
-        problem = parse_knapsack_response(raw_response)
+        problem = parse_knapsack_response(
+            raw_response, require_volume="volume_capacity" in case["expected_problem"]
+        )
     except ParseError as exc:
         return {**result, "schema_valid": False, "error": str(exc)}
 
@@ -69,13 +88,17 @@ def evaluate_case(case: dict[str, Any], raw_response: str) -> dict[str, Any]:
         data["items"] = sorted(data["items"], key=lambda item: item["name"])
     formulation_matches = actual_data == expected_data
 
-    solution = solve_knapsack(problem)
+    try:
+        solution = solve_knapsack(problem)
+    except ValueError as exc:
+        return {**result, "schema_valid": True, "error": str(exc)}
     reference = case["expected_solution"]
     solution_matches = (
         solution["status"] == reference["status"]
         and sorted(solution["selected_items"]) == sorted(reference["selected_items"])
         and solution["total_weight"] == reference["total_weight"]
         and solution["total_value"] == reference["total_value"]
+        and solution.get("total_volume") == reference.get("total_volume")
     )
     return {
         **result,
